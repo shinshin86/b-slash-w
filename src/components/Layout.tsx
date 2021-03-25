@@ -247,6 +247,11 @@ const Layout: React.FC<{
           text-decoration: none;
         }
 
+        p a {
+          color: #0814a9;
+          text-decoration: underline;
+        }
+
         a:before {
           -moz-transition: color 0.2s ease, text-shadow 0.2s ease;
           -webkit-transition: color 0.2s ease, text-shadow 0.2s ease;
@@ -687,6 +692,18 @@ const Layout: React.FC<{
         .prev-next-links {
           display: flex;
           justify-content: space-between;
+        }
+        /* pre */
+        pre {
+          background-color: #eee;
+          padding: 8px;
+          margin: 8px 0;
+          border-radius: 4px;
+        }
+        /* code */
+        code {
+          background-color: #eee;
+          padding: 4px;
         }
       `}</style>
     </>

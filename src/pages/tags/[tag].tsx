@@ -1,16 +1,17 @@
-import Layout from '../../components/Layout';
-import Analytics from '../../components/Analytics';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import LinkCard from '../../components/LinkCard';
-import PageTopButton from '../../components/PageTopButton';
-import AvatarImage from '../../components/AvatarImage';
-import { getTagList } from '../../utils/tags';
-import { isValidData } from '../../utils/validate';
-import { General, Meta, Content } from '../../utils/sheet-data';
+import Layout from '@/components/Layout';
+import Analytics from '@/components/Analytics';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import LinkCard from '@/components/LinkCard';
+import PageTopButton from '@/components/PageTopButton';
+import AvatarImage from '@/components/AvatarImage';
+import { getTagList } from '@/utils/tags';
+import { isValidData } from '@/utils/validate';
+import { General, Meta, Content } from '@/utils/sheet-data';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import ExternalLinks from '@/components/ExternalLinks';
 import { getSlugText } from '@/utils/slug';
+import { getDownloadedImagePath } from '@/utils/image';
 
 export const config = {
   amp: true,
@@ -25,6 +26,7 @@ const TagPage: React.FC<{
   const {
     title,
     logoImage,
+    downloadedImagePath,
     logoImageAltText,
     externalLinkUrl,
     externalLinkText,
@@ -38,6 +40,8 @@ const TagPage: React.FC<{
     noindex,
   } = meta;
 
+  const avatarImage = downloadedImagePath || logoImage;
+
   return (
     <Layout
       backgroundColorCode={backgroundColor}
@@ -48,6 +52,7 @@ const TagPage: React.FC<{
         title={meta.title}
         description={meta.description}
         ogpImage={meta.ogpImage}
+        avatarImage={avatarImage}
         googleSiteVerificationCode={googleSiteVerificationCode}
         noindex={noindex}
       />
@@ -67,16 +72,18 @@ const TagPage: React.FC<{
         <section id="main">
           <header>
             <a href="/">
-              <AvatarImage imageUrl={logoImage} altText={logoImageAltText} />
+              <AvatarImage imageUrl={avatarImage} altText={logoImageAltText} />
             </a>
             <a href="/">
               <h1>{title}</h1>
             </a>
             <p>Tag - {tag}</p>
           </header>
-          {content.map((data, index) => (
-            <LinkCard {...data} key={index} />
-          ))}
+          <ul>
+            {content.map((data, index) => (
+              <LinkCard {...data} key={index} />
+            ))}
+          </ul>
           <hr />
           {externalLinkUrl && (
             <ExternalLinks url={externalLinkUrl} text={externalLinkText} />
@@ -138,6 +145,14 @@ export const getStaticProps: GetStaticProps = async ({ params }: Params) => {
 
   if (!isValidData(general, meta, contentList)) {
     throw new Error('BUILD ERROR: Invalid sheet data');
+  }
+
+  general.downloadedImagePath =
+    general.logoImage && (await getDownloadedImagePath(general.logoImage));
+
+  for (const c of contentList) {
+    c.downloadedImagePath =
+      c.imagePath && (await getDownloadedImagePath(c.imagePath));
   }
 
   return {

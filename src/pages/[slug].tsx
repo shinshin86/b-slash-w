@@ -1,22 +1,20 @@
 import dayjs from 'dayjs';
-import Layout from '../components/Layout';
-import Analytics from '../components/Analytics';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import PageTopButton from '../components/PageTopButton';
-import TagLinks from '../components/TagLinks';
-import { isValidData } from '../utils/validate';
-import { getTagList } from '../utils/tags';
-import {
-  renderHTML,
-  getMetaDescriptionText,
-  convertAmpImg,
-} from '../utils/content';
-import { General, Meta, Content } from '../utils/sheet-data';
+import Layout from '@/components/Layout';
+import Analytics from '@/components/Analytics';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import PageTopButton from '@/components/PageTopButton';
+import TagLinks from '@/components/TagLinks';
+import AvatarImage from '@/components/AvatarImage';
+import { isValidData } from '@/utils/validate';
+import { getTagList } from '@/utils/tags';
+import { renderAmpHTML, getMetaDescriptionText } from '@/utils/content';
+import { General, Meta, Content } from '@/utils/sheet-data';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import ExternalLinks from '@/components/ExternalLinks';
 import PrevNextLinks from '@/components/PrevNextLinks';
 import { getSlugText } from '@/utils/slug';
+import { getDownloadedImagePath } from '@/utils/image';
 
 export const config = {
   amp: true,
@@ -39,7 +37,7 @@ const DetailPage: React.FC<{
     title,
     description,
     text,
-    imagePath,
+    downloadedImagePath,
     imageAltText,
     tags,
     renderedHTML,
@@ -62,7 +60,8 @@ const DetailPage: React.FC<{
         siteUrl={`${meta.siteUrl}/${contentData.slug}`}
         title={`${title} | ${meta.title}`}
         description={description || getMetaDescriptionText(text)}
-        ogpImage={imagePath || meta.ogpImage}
+        ogpImage={downloadedImagePath || meta.ogpImage}
+        avatarImage={downloadedImagePath || '/images/no-image.png'}
         googleSiteVerificationCode={googleSiteVerificationCode}
         noindex={noindex}
       />
@@ -89,14 +88,10 @@ const DetailPage: React.FC<{
 
           <header>
             {!!tagList.length && <TagLinks tags={tagList} />}
-            <span className="avatar">
-              <amp-img
-                src={imagePath || '/images/no-image.png'}
-                alt={imageAltText || 'No Image'}
-                width="250"
-                height="250"
-              />
-            </span>
+            <AvatarImage
+              imageUrl={downloadedImagePath || '/images/no-image.png'}
+              altText={imageAltText}
+            />
             <h2>{title}</h2>
             {publishedDate && (
               <p>{dayjs(publishedDate).format(dateFormat || 'YYYY/MM/DD')}</p>
@@ -148,21 +143,23 @@ export const getStaticProps: GetStaticProps = async ({ params }: Params) => {
 
   const response = await fetch(SHEET_URL).then((r) => r.json());
   const { general, meta, content } = response;
-  const contentData = content.find((c: Content) => c.slug === params.slug);
-  const renderedHTML = renderHTML(contentData.text);
+  const contentData = content.find(
+    (c: Content) => getSlugText(c.slug) === params.slug
+  );
 
-  const imgList = renderedHTML.match(/<img(.|\s)*?>/gi);
-  contentData.renderedHTML = !imgList
-    ? renderedHTML
-    : await convertAmpImg(renderedHTML);
+  contentData.renderedHTML = await renderAmpHTML(contentData.text);
 
-  const slugList = content.map((c: Content) => c.slug);
+  contentData.downloadedImagePath =
+    contentData.imagePath &&
+    (await getDownloadedImagePath(contentData.imagePath));
+
+  const slugList = content.map((c: Content) => getSlugText(c.slug));
   const targetPageIndex = slugList.indexOf(params.slug);
   contentData.prevPageUrl =
-    targetPageIndex && `/${getSlugText(slugList[targetPageIndex - 1])}`;
+    targetPageIndex && `/${slugList[targetPageIndex - 1]}`;
   contentData.nextPageUrl =
     slugList.length > targetPageIndex + 1 &&
-    `/${getSlugText(slugList[targetPageIndex + 1])}`;
+    `/${slugList[targetPageIndex + 1]}`;
 
   if (!isValidData(general, meta, new Array(contentData))) {
     throw new Error('BUILD ERROR: Invalid sheet data');

@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
-import TagLinks from './TagLinks';
-import { getTagList } from '../utils/tags';
-import { getDescriptionText, getTextContent } from '../utils/content';
-import { Content } from '../utils/sheet-data';
+import TagLinks from '@/components/TagLinks';
+import { getTagList } from '@/utils/tags';
+import { getDescriptionText, getTextContent } from '@/utils/content';
+import { Content } from '@/utils/sheet-data';
 import ExternalLinks from '@/components/ExternalLinks';
 import { getSlugText } from '@/utils/slug';
 
@@ -11,7 +11,7 @@ const LinkCard: React.FC<Content> = ({
   tags,
   description,
   text,
-  imagePath,
+  downloadedImagePath: imagePath,
   imageAltText,
   slug,
   externalLinkUrl,
